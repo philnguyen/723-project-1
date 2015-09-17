@@ -1,7 +1,7 @@
 import re
 import os
 
-carmelPath = '~hal/bin/carmel'
+carmelPath = 'carmel'
 
 class FSM:        
     def __init__(self, isTransducer=False, isProbabilistic=False):

@@ -21,7 +21,8 @@ def iterateRules():
     # if you need help with python regular expressions, see:
     #   http://docs.python.org/library/re.html
     ### TODO: YOUR CODE HERE
-    util.raiseNotDefined()
+    yield ("(.+)([aeoui])c\+ed","\\1\\2cked")
+    yield ("(.+)([aeoui])c\+ing","\\1\\2cking")
 
     
 def generate(analysis):

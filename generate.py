@@ -23,6 +23,8 @@ def iterateRules():
     ### TODO: YOUR CODE HERE
     yield ("(.+)([aeoui])c\+ed","\\1\\2cked")
     yield ("(.+)([aeoui])c\+ing","\\1\\2cking")
+    
+    yield ("(.*)([aeiouAEIOU])c\+([ed|ing])", "\\1\\2ck\\3")
 
     
 def generate(analysis):

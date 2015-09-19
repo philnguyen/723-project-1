@@ -6,15 +6,16 @@ suffixes   = ['', '+ed', '+ing', '+s']
 
 def buildSourceModel(vocabulary, suffixes):
     # we want a language model that accepts anything of the form
-    # *   w
+    # *   w 
     # *   w+s
     fsa = FSM.FSM()
     fsa.setInitialState('start')
     fsa.setFinalState('end')
     
-    ### TODO: YOUR CODE HERE
-    util.raiseNotDefined()
-
+    for w in vocabulary:
+        for s in suffixes:
+            fsa.addEdgeSequence('start', 'end', w)
+            fsa.addEdgeSequence('start', 'end', w + s)
     return fsa
 
 def buildChannelModel():
@@ -54,12 +55,31 @@ def buildChannelModel():
             continue
         fst.addEdge('rule2c', 'rule2d', c, c)     # keep anything except e or i
     fst.addEdge('rule2d', 'rule2d', '.', '.')     # keep the rest
-    fst.addEdge('rule2d', 'end' , None, None)   # we're done
+    fst.addEdge('rule2d', 'end' , None, None)     # we're done
 
-    # implementation of rule 3
-    ### TODO: YOUR CODE HERE
-    util.raiseNotDefined()
+    # implementation of rule 3: 
+    fst.addEdge('start' , 'rule3' , '.', '.')  
+    fst.addEdge('rule3', 'rule3', '.', '.')
+    
+    for i in range(ord('a'), ord('z')):
+       c = chr(i)
+       if c == 'a' or c == 'e' or c == 'i' or c == 'o' or c == 'u': 
+          fst.addEdge('rule3', 'rule3_vow', c, c) 
 
+    fst.addEdge('rule3_vow', 'rule3_c', 'c', 'c')
+    fst.addEdge('rule3_c', 'rule3_k', None, 'k')
+
+    fst.addEdge('rule3_k', 'rule3_+', '+', None) 
+ 
+    fst.addEdge('rule3_+', 'rule3_+e', 'e', 'e')
+    fst.addEdge('rule3_+e', 'rule3_+ed',  'd', 'd')
+    fst.addEdge('rule3_+ed', 'end', None, None)
+   
+    fst.addEdge('rule3_+', 'rule3_+i', 'i', 'i')
+    fst.addEdge('rule3_+i', 'rule3_+in', 'n', 'n')
+    fst.addEdge('rule3_+in', 'rule3_+ing', 'g', 'g')
+    fst.addEdge('rule3_+ing', 'end', None, None)
+   
     return fst
 
 def simpleTest():
@@ -71,7 +91,7 @@ def simpleTest():
     print "==== Result: ", str(output), " ===="
 
     print "==== Trying source model on strings 'panic+ing' ===="
-    output = FSM.runFST([fsa], ["panic+ing"])
+    output = FSM.runFST([fsa], ["panic"])
     print "==== Result: ", str(output), " ===="
     
     print "==== Generating random paths for 'aced', using only channel model ===="

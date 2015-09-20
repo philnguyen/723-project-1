@@ -112,16 +112,21 @@ def bigramSourceModel(segmentations):
     fsa = FSM.FSM(isProbabilistic=True)
     fsa.setInitialState('start')
     fsa.setFinalState('end')
-    ### TODO: YOUR CODE HERE
-    util.raiseNotDefined()
+    
+    ### TODO: YOUR CODE HERE 
+    for i in lm.iterkeys(): 
+        for j in i.iterkeys():
+            fsa.addEdge(i, j, j, prob=lm[i][j])
+        
     return fsa
 
 def buildSegmentChannelModel(words, segmentations):
     fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
     fst.setInitialState('start')
     fst.setFinalState('end')
+    
     ### TODO: YOUR CODE HERE
-    util.raiseNotDefined()
+    
 
     return fst
 

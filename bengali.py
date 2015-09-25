@@ -126,7 +126,16 @@ def buildSegmentChannelModel(words, segmentations):
     fst.setFinalState('end')
     
     ### TODO: YOUR CODE HERE
-    
+    for s in segmentations:
+        for w in s.split('+'):
+            fst.addEdgeSequence('start', 'end_of_seg', w)
+
+    fst.addEdge('end_of_seg', 'start', '+', None)
+    fst.addEdge('end_of_seg', 'end', None, None)
+
+    ## Self transition
+    fst.addEdge('start', 'start', '.', '.', 0.1)
+    fst.addEdge('start', 'start', '+', None, 0.1)
 
     return fst
 

@@ -113,10 +113,14 @@ def bigramSourceModel(segmentations):
     fsa.setInitialState('start')
     fsa.setFinalState('end')
     
-    ### TODO: YOUR CODE HERE 
+    ### TODO: YOUR CODE HERE
     for i in lm.iterkeys(): 
-        for j in i.iterkeys():
-            fsa.addEdge(i, j, j, prob=lm[i][j])
+        fsa.addEdge('start', 'start', i, i, prob=.02) 
+        for c in lm[i].iterkeys():
+            if c == 'end': 
+                fsa.addEdge(i, 'end', None, 'end', prob=lm[i][c])
+            else:    
+                fsa.addEdge(i, c, c, c, prob=lm[i][c])
         
     return fsa
 
@@ -126,9 +130,15 @@ def buildSegmentChannelModel(words, segmentations):
     fst.setFinalState('end')
     
     ### TODO: YOUR CODE HERE
+    # vocab = Counter()
+    # for w in words:
+    #     for c in w:
+    #         vocab[c] = vocab[c] + 1
+
+
     for s in segmentations:
-        for w in s.split('+'):
-            fst.addEdgeSequence('start', 'end_of_seg', w)
+           for w in s.split('+'):
+               fst.addEdgeSequence('start', 'end_of_seg', w)
 
     fst.addEdge('end_of_seg', 'start', '+', None)
     fst.addEdge('end_of_seg', 'end', None, None)
@@ -136,6 +146,7 @@ def buildSegmentChannelModel(words, segmentations):
     ## Self transition
     fst.addEdge('start', 'start', '.', '.', 0.1)
     fst.addEdge('start', 'start', '+', None, 0.1)
+  
 
     return fst
 

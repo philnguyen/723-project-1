@@ -61,23 +61,18 @@ def buildChannelModel():
     fst.addEdge('start' , 'rule3' , '.', '.')  
     fst.addEdge('rule3', 'rule3', '.', '.')
     
-    for i in range(ord('a'), ord('z')):
-       c = chr(i)
-       if c == 'a' or c == 'e' or c == 'i' or c == 'o' or c == 'u': 
-          fst.addEdge('rule3', 'rule3_vow', c, c) 
+    for c in "aeiou":
+        fst.addEdge('rule3', 'rule3_vow', c, c)
 
     fst.addEdge('rule3_vow', 'rule3_c', 'c', 'c')
     fst.addEdge('rule3_c', 'rule3_k', None, 'k')
 
     fst.addEdge('rule3_k', 'rule3_+', '+', None) 
  
-    fst.addEdge('rule3_+', 'rule3_+e', 'e', 'e')
-    fst.addEdge('rule3_+e', 'rule3_+ed',  'd', 'd')
+    fst.addEdgeSequence('rule3_+', 'rule3_+ed', 'ed')
     fst.addEdge('rule3_+ed', 'end', None, None)
    
-    fst.addEdge('rule3_+', 'rule3_+i', 'i', 'i')
-    fst.addEdge('rule3_+i', 'rule3_+in', 'n', 'n')
-    fst.addEdge('rule3_+in', 'rule3_+ing', 'g', 'g')
+    fst.addEdgeSequence('rule3_+', 'rule3_+i', 'ing')
     fst.addEdge('rule3_+ing', 'end', None, None)
    
     return fst

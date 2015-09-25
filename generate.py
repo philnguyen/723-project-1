@@ -21,9 +21,6 @@ def iterateRules():
     # if you need help with python regular expressions, see:
     #   http://docs.python.org/library/re.html
     ### TODO: YOUR CODE HERE
-    yield ("(.+)([aeoui])c\+ed","\\1\\2cked")
-    yield ("(.+)([aeoui])c\+ing","\\1\\2cking")
-    
     yield ("(.*)([aeiouAEIOU])c\+([ed|ing])", "\\1\\2ck\\3")
 
     

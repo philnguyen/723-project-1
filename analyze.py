@@ -66,15 +66,14 @@ def buildChannelModel():
 
     fst.addEdge('rule3_vow', 'rule3_c', 'c', 'c')
     fst.addEdge('rule3_c', 'rule3_k', None, 'k')
-
     fst.addEdge('rule3_k', 'rule3_+', '+', None) 
  
     fst.addEdgeSequence('rule3_+', 'rule3_+ed', 'ed')
     fst.addEdge('rule3_+ed', 'end', None, None)
       
-    fst.addEdgeSequence('rule3_+', 'rule3_+i', 'ing')
+    fst.addEdgeSequence('rule3_+', 'rule3_+ing', 'ing')
     fst.addEdge('rule3_+ing', 'end', None, None)
-    fst.addEdge('rule3_+', 'end', None, None)
+    
    
     return fst
 

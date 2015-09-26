@@ -105,23 +105,21 @@ def bigramSourceModel(segmentations):
     # smooth and normalize
     for prev in lm.iterkeys():
         for c in vocab.iterkeys():
-            lm[prev][c] = lm[prev][c] + 0.5   # add 0.5 smoothing
+            lm[prev][c] = lm[prev][c] + .5   # add 0.5 smoothing
         lm[prev].normalize()
 
     # convert to a FSA
     fsa = FSM.FSM(isProbabilistic=True)
     fsa.setInitialState('start')
     fsa.setFinalState('end')
-    
-    ### TODO: YOUR CODE HERE
+       
     for i in lm.iterkeys(): 
-        fsa.addEdge('start', 'start', i, i, prob=.02) 
         for c in lm[i].iterkeys():
             if c == 'end': 
-                fsa.addEdge(i, 'end', None, 'end', prob=lm[i][c])
+                fsa.addEdge(i, c, None, None, prob=lm[i][c])
             else:    
                 fsa.addEdge(i, c, c, c, prob=lm[i][c])
-        
+                   
     return fsa
 
 def buildSegmentChannelModel(words, segmentations):
@@ -129,13 +127,6 @@ def buildSegmentChannelModel(words, segmentations):
     fst.setInitialState('start')
     fst.setFinalState('end')
     
-    ### TODO: YOUR CODE HERE
-    # vocab = Counter()
-    # for w in words:
-    #     for c in w:
-    #         vocab[c] = vocab[c] + 1
-
-
     for s in segmentations:
            for w in s.split('+'):
                fst.addEdgeSequence('start', 'end_of_seg', w)
@@ -143,16 +134,18 @@ def buildSegmentChannelModel(words, segmentations):
     fst.addEdge('end_of_seg', 'start', '+', None)
     fst.addEdge('end_of_seg', 'end', None, None)
 
-    ## Self transition
-    fst.addEdge('start', 'start', '.', '.', 0.1)
-    fst.addEdge('start', 'start', '+', None, 0.1)
-  
-
+    ## Self transitions
+    for s in segmentations:
+        for c in s:
+            fst.addEdge(c, c, '+', None, 0.1)
+            fst.addEdge(c, c, c, c, 0.1)
+            fst.addEdge('start', 'start', c, c, 0.1)
+   
     return fst
 
 
 def fancySouceModel(segmentations):
-    raise Exception("fancySouceModel not defined")
+     raise Exception("fancyChannelModel not defined")
 
 def fancyChannelModel(words, segmentations):
     raise Exception("fancyChannelModel not defined")

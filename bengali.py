@@ -53,6 +53,118 @@ def evaluate(truth, hypothesis):
         Fsc = 2 * Pre * Rec / (Pre + Rec)
     return (Pre, Rec, Fsc)
 
+def fancySourceModel(segmentations):
+      # 
+      # unigrams
+#       tokens = 0
+#       uni = Counter()
+#       uni['end'] = 1
+#       for s in segmentations:
+#         for c in s:
+#             uni[c] = uni[c] + 1
+#             tokens += 1
+#       types = len(uni.keys())
+#       denom = tokens + types
+#       for c in uni.keys():
+#         uni[c] = uni[c]/denom
+#
+#       # compute all bigrams
+#       bi = {}
+#       for s in segmentations:
+#           prev = 'start'
+#           for c in s:
+#               if not bi.has_key(prev): bi[prev] = Counter()
+#               bi[prev][c] = bi[prev][c] + 1
+#               prev = c
+#           if not bi.has_key(prev): bi[prev] = Counter()
+#           bi[prev]['end'] = bi[prev]['end'] + 1
+#
+#       for prev in bi.iterkeys():
+#           for c in uni.keys():
+#               if bi[prev][c] == 0:
+#                  bi[prev][c] = uni[c]
+#               else:
+#                  types = len(bi[prev].keys())
+#                  tokens = uni[prev]
+#                  denom = types + tokens
+#                  bi[prev][c] =  bi[prev][c]/denom
+#
+#       for prev in bi.iterkeys():
+#          for c in uni.iterkeys():
+#              bi[prev][c] = bi[prev][c] + .15
+#          bi[prev].normalize()
+
+#       # convert to a FSA
+#       fsa = FSM.FSM(isProbabilistic=True)
+#       fsa.setInitialState('start')
+#       fsa.setFinalState('end')
+#
+#       for i in bi.iterkeys():
+#           for c in bi[i].iterkeys():
+#               if c == 'end':
+#                   fsa.addEdge(i, c, None, None, prob=bi[i][c])
+#               else:
+#                   fsa.addEdge(i, c, c, c, prob=bi[i][c])
+#
+#       return fsa
+    # compute all bigrams
+    lm = {}
+    vocab = {}
+    vocab['end'] = 1
+    for s in segmentations:
+        prev = 'start'
+        for c in s:
+            if not lm.has_key(prev): lm[prev] = Counter()
+            lm[prev][c] = lm[prev][c] + 1
+            prev = c
+            vocab[c] = 1
+        if not lm.has_key(prev): lm[prev] = Counter()
+        lm[prev]['end'] = lm[prev]['end'] + 1
+
+    # smooth and normalize
+    for prev in lm.iterkeys():
+        for c in vocab.iterkeys():
+            lm[prev][c] = lm[prev][c] + .5   # add 0.5 smoothing
+        lm[prev].normalize()
+
+    # convert to a FSA
+    fsa = FSM.FSM(isProbabilistic=True)
+    fsa.setInitialState('start')
+    fsa.setFinalState('end')
+       
+    for i in lm.iterkeys(): 
+        for c in lm[i].iterkeys():
+            if c == 'end': 
+                fsa.addEdge(i, c, None, None, prob=lm[i][c])
+            else:    
+                fsa.addEdge(i, c, c, c, prob=lm[i][c])
+                   
+    return fsa
+      
+def fancyChannelModel(words, segmentations):
+    fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
+    fst.setInitialState('start')
+    fst.setFinalState('end')
+    
+    # Add each possible segment
+    for s in segmentations:
+       for w in s.split('+'):
+          fst.addEdgeSequence('start', 'end', w)
+
+    fst.addEdge('end', 'start', '+', None)
+
+    # Self transitions for smoothing
+    fst.addEdge('start', 'start', '+', None, 0.1)
+    seen_chars = set([])
+    for w in words:
+        for c in w:
+            if not (c in seen_chars): 
+                fst.addEdge('start', 'start', c, c, 0.1)
+                seen_chars.add(c)
+
+    return fst
+    
+
 def stupidChannelModel(words, segmentations):
     # figure out the character vocabulary
     vocab = Counter()
@@ -93,12 +205,10 @@ def bigramSourceModel(segmentations):
     vocab = {}
     vocab['end'] = 1
     for s in segmentations:
-        #print s
         prev = 'start'
         for c in s:
             if not lm.has_key(prev): lm[prev] = Counter()
             lm[prev][c] = lm[prev][c] + 1
-            #print lm
             prev = c
             vocab[c] = 1
         if not lm.has_key(prev): lm[prev] = Counter()
@@ -110,15 +220,12 @@ def bigramSourceModel(segmentations):
             lm[prev][c] = lm[prev][c] + .5   # add 0.5 smoothing
         lm[prev].normalize()
 
-    #print 'before training, P/R/F = ', str(lm)
-
     # convert to a FSA
     fsa = FSM.FSM(isProbabilistic=True)
     fsa.setInitialState('start')
     fsa.setFinalState('end')
        
     for i in lm.iterkeys(): 
-        fsa.addEdge('start', i, i, i, prob=.02) 
         for c in lm[i].iterkeys():
             if c == 'end': 
                 fsa.addEdge(i, c, None, None, prob=lm[i][c])
@@ -132,68 +239,24 @@ def buildSegmentChannelModel(words, segmentations):
     fst.setInitialState('start')
     fst.setFinalState('end')
 
-    # figure out the character vocabulary
-    vocab = Counter()
-    for s in segmentations:
-        for c in s:
-            vocab[c] = vocab[c] + 1
-    # convert to probabilities
-    vocab.normalize()
-    
     # Add each possible segment
     for s in segmentations:
-        for w in s.split('+'):
-            fst.addEdgeSequence('start', 'end_of_seg', w)
+       for w in s.split('+'):
+          fst.addEdgeSequence('start', 'end', w)
 
-    fst.addEdge('end_of_seg', 'start', '+', None)
-    fst.addEdge('end_of_seg', 'end', None, None)
+    fst.addEdge('end', 'start', '+', None)
 
     # Self transitions for smoothing
     fst.addEdge('start', 'start', '+', None, 0.1)
     seen_chars = set([])
     for w in words:
         for c in w:
-            # avoid adding duplicate edges. I'm not sure if that's idempotent
             if not (c in seen_chars): 
                 fst.addEdge('start', 'start', c, c, 0.1)
                 seen_chars.add(c)
-   
+
     return fst
 
-
-def fancySourceModel(segmentations):
-    return bigramSourceModel(segmentations)
-
-def fancyChannelModel(words, segmentations):
-    fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
-    fst.setInitialState('start')
-    fst.setFinalState('end')
-
-    # figure out the character vocabulary
-    vocab = Counter()
-    for s in segmentations:
-        for c in s:
-            vocab[c] = vocab[c] + 1
-    # convert to probabilities
-    vocab.normalize()
-    
-    for s in segmentations:
-           for w in s.split('+'):
-               fst.addEdgeSequence('start', 'end_of_seg', w)
-
-    fst.addEdge('end_of_seg', 'start', '+', None)
-    fst.addEdge('end_of_seg', 'end', None, None)
-
-    ## Self transitions
-    for c,v in vocab.iteritems:
-        #for c in s:
-            #fst.addEdge(c, c, '+', None, 0.1)
-            #fst.addEdge(c, c, c, c, 0.1)
-        fst.addEdge('start', 'start', c, c, v)
-   
-    return fst
-
-    
 def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=stupidSourceModel, skipTraining=False):
     (words, segs) = readData(trainFile)
     (wordsDev, segsDev) = readData(devFile)

@@ -54,62 +54,10 @@ def evaluate(truth, hypothesis):
     return (Pre, Rec, Fsc)
 
 def fancySourceModel(segmentations):
-    # compute all bigrams
-    lm = {}
-    vocab = {}
-    vocab['end'] = 1
-    for s in segmentations:
-        prev = 'start'
-        for c in s:
-            if not lm.has_key(prev): lm[prev] = Counter()
-            lm[prev][c] = lm[prev][c] + 1
-            prev = c
-            vocab[c] = 1
-        if not lm.has_key(prev): lm[prev] = Counter()
-        lm[prev]['end'] = lm[prev]['end'] + 1
-
-    # smooth and normalize
-    for prev in lm.iterkeys():
-        for c in vocab.iterkeys():
-            lm[prev][c] = lm[prev][c] + .5   # add 0.5 smoothing
-        lm[prev].normalize()
-
-    # convert to a FSA
-    fsa = FSM.FSM(isProbabilistic=True)
-    fsa.setInitialState('start')
-    fsa.setFinalState('end')
-       
-    for i in lm.iterkeys(): 
-        for c in lm[i].iterkeys():
-            if c == 'end': 
-                fsa.addEdge(i, c, None, None, prob=lm[i][c])
-            else:    
-                fsa.addEdge(i, c, c, c, prob=lm[i][c])
-                   
-    return fsa
+    return bigramSourceModel(segmentations)
       
 def fancyChannelModel(words, segmentations):
-    fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
-    fst.setInitialState('start')
-    fst.setFinalState('end')
-    
-    # Add each possible segment
-    for s in segmentations:
-       for w in s.split('+'):
-          fst.addEdgeSequence('start', 'end', w)
-
-    fst.addEdge('end', 'start', '+', None)
-
-    # Self transitions for smoothing
-    fst.addEdge('start', 'start', '+', None, 0.1)
-    seen_chars = set([])
-    for w in words:
-        for c in w:
-            if not (c in seen_chars): 
-                fst.addEdge('start', 'start', c, c, 0.1)
-                seen_chars.add(c)
-
-    return fst
+    return buildSegmentChannelModel(words, segmentations)
     
 
 def stupidChannelModel(words, segmentations):

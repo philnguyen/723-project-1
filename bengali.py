@@ -93,10 +93,12 @@ def bigramSourceModel(segmentations):
     vocab = {}
     vocab['end'] = 1
     for s in segmentations:
+        #print s
         prev = 'start'
         for c in s:
             if not lm.has_key(prev): lm[prev] = Counter()
             lm[prev][c] = lm[prev][c] + 1
+            #print lm
             prev = c
             vocab[c] = 1
         if not lm.has_key(prev): lm[prev] = Counter()
@@ -108,12 +110,15 @@ def bigramSourceModel(segmentations):
             lm[prev][c] = lm[prev][c] + .5   # add 0.5 smoothing
         lm[prev].normalize()
 
+    #print 'before training, P/R/F = ', str(lm)
+
     # convert to a FSA
     fsa = FSM.FSM(isProbabilistic=True)
     fsa.setInitialState('start')
     fsa.setFinalState('end')
        
     for i in lm.iterkeys(): 
+        fsa.addEdge('start', i, i, i, prob=.02) 
         for c in lm[i].iterkeys():
             if c == 'end': 
                 fsa.addEdge(i, c, None, None, prob=lm[i][c])
@@ -126,6 +131,14 @@ def buildSegmentChannelModel(words, segmentations):
     fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
     fst.setInitialState('start')
     fst.setFinalState('end')
+
+    # figure out the character vocabulary
+    vocab = Counter()
+    for s in segmentations:
+        for c in s:
+            vocab[c] = vocab[c] + 1
+    # convert to probabilities
+    vocab.normalize()
     
     for s in segmentations:
            for w in s.split('+'):
@@ -135,11 +148,11 @@ def buildSegmentChannelModel(words, segmentations):
     fst.addEdge('end_of_seg', 'end', None, None)
 
     ## Self transitions
-    for s in segmentations:
-        for c in s:
-            fst.addEdge(c, c, '+', None, 0.1)
-            fst.addEdge(c, c, c, c, 0.1)
-            fst.addEdge('start', 'start', c, c, 0.1)
+    for c,v in vocab.iteritems:
+        #for c in s:
+            #fst.addEdge(c, c, '+', None, 0.1)
+            #fst.addEdge(c, c, c, c, 0.1)
+        fst.addEdge('start', 'start', c, c, v)
    
     return fst
 
@@ -151,7 +164,7 @@ def fancyChannelModel(words, segmentations):
     raise Exception("fancyChannelModel not defined")
 
     
-def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=stupidSourceModel, skipTraining=False):
+def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=bigramSourceModel, skipTraining=False):
     (words, segs) = readData(trainFile)
     (wordsDev, segsDev) = readData(devFile)
     fst = channel(words, segs)

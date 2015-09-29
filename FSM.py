@@ -1,7 +1,7 @@
 import re
 import os
 
-carmelPath = 'carmel'
+carmelPath = '/Users/Mukul/Desktop/SEM\ 1/computational\ linguistics/week2hw/bin/carmel'
 
 class FSM:        
     def __init__(self, isTransducer=False, isProbabilistic=False):

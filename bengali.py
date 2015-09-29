@@ -140,6 +140,43 @@ def buildSegmentChannelModel(words, segmentations):
     # convert to probabilities
     vocab.normalize()
     
+    # Add each possible segment
+    for s in segmentations:
+        for w in s.split('+'):
+            fst.addEdgeSequence('start', 'end_of_seg', w)
+
+    fst.addEdge('end_of_seg', 'start', '+', None)
+    fst.addEdge('end_of_seg', 'end', None, None)
+
+    # Self transitions for smoothing
+    fst.addEdge('start', 'start', '+', None, 0.1)
+    seen_chars = set([])
+    for w in words:
+        for c in w:
+            # avoid adding duplicate edges. I'm not sure if that's idempotent
+            if not (c in seen_chars): 
+                fst.addEdge('start', 'start', c, c, 0.1)
+                seen_chars.add(c)
+   
+    return fst
+
+
+def fancySourceModel(segmentations):
+    return bigramSourceModel(segmentations)
+
+def fancyChannelModel(words, segmentations):
+    fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
+    fst.setInitialState('start')
+    fst.setFinalState('end')
+
+    # figure out the character vocabulary
+    vocab = Counter()
+    for s in segmentations:
+        for c in s:
+            vocab[c] = vocab[c] + 1
+    # convert to probabilities
+    vocab.normalize()
+    
     for s in segmentations:
            for w in s.split('+'):
                fst.addEdgeSequence('start', 'end_of_seg', w)
@@ -148,24 +185,16 @@ def buildSegmentChannelModel(words, segmentations):
     fst.addEdge('end_of_seg', 'end', None, None)
 
     ## Self transitions
-    #for c,v in vocab.iteritems:
-    for s in segmentations:
-        for c in s:
+    for c,v in vocab.iteritems:
+        #for c in s:
             #fst.addEdge(c, c, '+', None, 0.1)
             #fst.addEdge(c, c, c, c, 0.1)
-            fst.addEdge('start', 'start', c, c, 0.1)
+        fst.addEdge('start', 'start', c, c, v)
    
     return fst
 
-
-def fancySouceModel(segmentations):
-     raise Exception("fancyChannelModel not defined")
-
-def fancyChannelModel(words, segmentations):
-    raise Exception("fancyChannelModel not defined")
-
     
-def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=bigramSourceModel, skipTraining=False):
+def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=stupidSourceModel, skipTraining=False):
     (words, segs) = readData(trainFile)
     (wordsDev, segsDev) = readData(devFile)
     fst = channel(words, segs)

@@ -148,11 +148,12 @@ def buildSegmentChannelModel(words, segmentations):
     fst.addEdge('end_of_seg', 'end', None, None)
 
     ## Self transitions
-    for c,v in vocab.iteritems:
-        #for c in s:
+    #for c,v in vocab.iteritems:
+    for s in segmentations:
+        for c in s:
             #fst.addEdge(c, c, '+', None, 0.1)
             #fst.addEdge(c, c, c, c, 0.1)
-        fst.addEdge('start', 'start', c, c, v)
+            fst.addEdge('start', 'start', c, c, 0.1)
    
     return fst
 

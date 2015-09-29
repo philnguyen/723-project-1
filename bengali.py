@@ -54,59 +54,6 @@ def evaluate(truth, hypothesis):
     return (Pre, Rec, Fsc)
 
 def fancySourceModel(segmentations):
-      # 
-      # unigrams
-#       tokens = 0
-#       uni = Counter()
-#       uni['end'] = 1
-#       for s in segmentations:
-#         for c in s:
-#             uni[c] = uni[c] + 1
-#             tokens += 1
-#       types = len(uni.keys())
-#       denom = tokens + types
-#       for c in uni.keys():
-#         uni[c] = uni[c]/denom
-#
-#       # compute all bigrams
-#       bi = {}
-#       for s in segmentations:
-#           prev = 'start'
-#           for c in s:
-#               if not bi.has_key(prev): bi[prev] = Counter()
-#               bi[prev][c] = bi[prev][c] + 1
-#               prev = c
-#           if not bi.has_key(prev): bi[prev] = Counter()
-#           bi[prev]['end'] = bi[prev]['end'] + 1
-#
-#       for prev in bi.iterkeys():
-#           for c in uni.keys():
-#               if bi[prev][c] == 0:
-#                  bi[prev][c] = uni[c]
-#               else:
-#                  types = len(bi[prev].keys())
-#                  tokens = uni[prev]
-#                  denom = types + tokens
-#                  bi[prev][c] =  bi[prev][c]/denom
-#
-#       for prev in bi.iterkeys():
-#          for c in uni.iterkeys():
-#              bi[prev][c] = bi[prev][c] + .15
-#          bi[prev].normalize()
-
-#       # convert to a FSA
-#       fsa = FSM.FSM(isProbabilistic=True)
-#       fsa.setInitialState('start')
-#       fsa.setFinalState('end')
-#
-#       for i in bi.iterkeys():
-#           for c in bi[i].iterkeys():
-#               if c == 'end':
-#                   fsa.addEdge(i, c, None, None, prob=bi[i][c])
-#               else:
-#                   fsa.addEdge(i, c, c, c, prob=bi[i][c])
-#
-#       return fsa
     # compute all bigrams
     lm = {}
     vocab = {}

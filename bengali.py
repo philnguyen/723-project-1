@@ -127,19 +127,23 @@ def buildSegmentChannelModel(words, segmentations):
     fst.setInitialState('start')
     fst.setFinalState('end')
     
+    # Add each possible segment
     for s in segmentations:
-           for w in s.split('+'):
-               fst.addEdgeSequence('start', 'end_of_seg', w)
+        for w in s.split('+'):
+            fst.addEdgeSequence('start', 'end_of_seg', w)
 
     fst.addEdge('end_of_seg', 'start', '+', None)
     fst.addEdge('end_of_seg', 'end', None, None)
 
-    ## Self transitions
-    for s in segmentations:
-        for c in s:
-            fst.addEdge(c, c, '+', None, 0.1)
-            fst.addEdge(c, c, c, c, 0.1)
-            fst.addEdge('start', 'start', c, c, 0.1)
+    # Self transitions for smoothing
+    fst.addEdge('start', 'start', '+', None, 0.1)
+    seen_chars = set([])
+    for w in words:
+        for c in w:
+            # avoid adding duplicate edges. I'm not sure if that's idempotent
+            if not (c in seen_chars): 
+                fst.addEdge('start', 'start', c, c, 0.1)
+                seen_chars.add(c)
    
     return fst
 

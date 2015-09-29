@@ -148,11 +148,37 @@ def buildSegmentChannelModel(words, segmentations):
     return fst
 
 
-def fancySouceModel(segmentations):
-     raise Exception("fancyChannelModel not defined")
+def fancySourceModel(segmentations):
+    return bigramSourceModel(segmentations)
 
 def fancyChannelModel(words, segmentations):
-    raise Exception("fancyChannelModel not defined")
+    fst = FSM.FSM(isTransducer=True, isProbabilistic=True)
+    fst.setInitialState('start')
+    fst.setFinalState('end')
+
+    # figure out the character vocabulary
+    vocab = Counter()
+    for s in segmentations:
+        for c in s:
+            vocab[c] = vocab[c] + 1
+    # convert to probabilities
+    vocab.normalize()
+    
+    for s in segmentations:
+           for w in s.split('+'):
+               fst.addEdgeSequence('start', 'end_of_seg', w)
+
+    fst.addEdge('end_of_seg', 'start', '+', None)
+    fst.addEdge('end_of_seg', 'end', None, None)
+
+    ## Self transitions
+    for c,v in vocab.iteritems:
+        #for c in s:
+            #fst.addEdge(c, c, '+', None, 0.1)
+            #fst.addEdge(c, c, c, c, 0.1)
+        fst.addEdge('start', 'start', c, c, v)
+   
+    return fst
 
     
 def runTest(trainFile='bengali.train', devFile='bengali.dev', channel=stupidChannelModel, source=stupidSourceModel, skipTraining=False):
